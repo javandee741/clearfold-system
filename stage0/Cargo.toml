@@ -1,0 +1,8 @@
+[package]
+name = "clearfold-stage0"
+version = "0.0.1"
+edition = "2024"
+publish = false
+
+[dependencies]
+uefi = { version = "0.41.0", features = ["panic_handler"] }
