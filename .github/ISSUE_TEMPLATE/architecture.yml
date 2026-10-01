@@ -1,0 +1,23 @@
+name: Architecture proposal
+description: Propose a change to a published architectural decision
+labels: ["architecture"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+    validations:
+      required: true
+  - type: textarea
+    id: invariants
+    attributes:
+      label: Affected invariants / ABI
+      description: Identify what would change and why the change cannot remain outside the kernel if applicable.
+    validations:
+      required: true

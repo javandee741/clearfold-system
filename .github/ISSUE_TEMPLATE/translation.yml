@@ -1,0 +1,22 @@
+name: Translation / localization
+description: Translate or correct project documentation
+labels: ["documentation", "translation"]
+body:
+  - type: input
+    id: locale
+    attributes:
+      label: Locale
+      placeholder: "zh-CN, ja, es..."
+    validations:
+      required: true
+  - type: input
+    id: document
+    attributes:
+      label: Source document and version
+      placeholder: "technical-assignment v0.15"
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes / terminology questions

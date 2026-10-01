@@ -1,0 +1,52 @@
+{
+  "baseline": "0.15",
+  "canonical_target": "en",
+  "historical_normative_source": "ru",
+  "documents": {
+    "technical-assignment": {
+      "ru": "complete",
+      "en": "planned",
+      "zh-CN": "planned"
+    },
+    "system-architecture": {
+      "ru": "complete",
+      "en": "planned",
+      "zh-CN": "planned"
+    },
+    "kernel-abi": {
+      "ru": "complete",
+      "en": "planned",
+      "zh-CN": "planned"
+    },
+    "security-threat-model": {
+      "ru": "complete",
+      "en": "planned",
+      "zh-CN": "planned"
+    },
+    "prototype-p0-plan": {
+      "ru": "complete",
+      "en": "planned",
+      "zh-CN": "planned"
+    },
+    "verification-validation": {
+      "ru": "complete",
+      "en": "planned",
+      "zh-CN": "planned"
+    },
+    "engineering-process-adr": {
+      "ru": "complete",
+      "en": "planned",
+      "zh-CN": "planned"
+    },
+    "glossary": {
+      "ru": "complete",
+      "en": "planned",
+      "zh-CN": "planned"
+    },
+    "traceability-matrix": {
+      "ru": "complete",
+      "en": "planned",
+      "zh-CN": "planned"
+    }
+  }
+}

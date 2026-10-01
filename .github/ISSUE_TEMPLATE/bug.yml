@@ -1,0 +1,23 @@
+name: Bug report
+description: Report an implementation or documentation defect
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Problem
+      description: What is wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: input
+    id: subsystem
+    attributes:
+      label: Subsystem / version
+      placeholder: "v0.6 IPC, kernel/core, docs/..."
