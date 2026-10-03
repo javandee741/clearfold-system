@@ -10,3 +10,6 @@ name = "clearfold-kernel"
 path = "src/main.rs"
 test = false
 bench = false
+
+[dependencies]
+clearfold-boot-abi = { path = "../libs/boot-abi" }
