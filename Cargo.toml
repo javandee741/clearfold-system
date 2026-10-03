@@ -3,6 +3,7 @@ resolver = "3"
 
 members = [
     "stage0",
+    "kernel",
 ]
 
 [profile.dev]

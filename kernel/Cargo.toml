@@ -1,0 +1,12 @@
+[package]
+name = "clearfold-kernel"
+version = "0.0.1"
+edition = "2024"
+publish = false
+build = "build.rs"
+
+[[bin]]
+name = "clearfold-kernel"
+path = "src/main.rs"
+test = false
+bench = false
