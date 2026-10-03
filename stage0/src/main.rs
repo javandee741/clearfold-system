@@ -40,7 +40,7 @@ fn main() -> Status {
     uefi::println!();
 
     uefi::println!("[CLEARFOLD] architecture : x86_64");
-    uefi::println!("[CLEARFOLD] milestone    : P0/M1.1");
+    uefi::println!("[CLEARFOLD] milestone    : P0/M1.2a");
     uefi::println!("[CLEARFOLD] UEFI entry   : OK");
 
     let kernel = load_kernel();

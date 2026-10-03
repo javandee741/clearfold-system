@@ -3,7 +3,7 @@
 
 mod arch;
 
-use core::{panic::PanicInfo, ptr};
+use core::{mem, panic::PanicInfo, ptr};
 
 use clearfold_boot_abi::{BootInfo, MemoryKind, MemoryRegion};
 
@@ -23,7 +23,7 @@ pub extern "sysv64" fn kernel_entry(boot_info: *const BootInfo) -> ! {
 
     serial::write_str("[CLEARFOLD KERNEL] architecture : x86_64\n");
 
-    serial::write_str("[CLEARFOLD KERNEL] milestone    : P0/M1.1\n");
+    serial::write_str("[CLEARFOLD KERNEL] milestone    : P0/M1.2a\n");
 
     serial::write_str("[CLEARFOLD KERNEL] entry        : OK\n");
 
@@ -35,13 +35,7 @@ pub extern "sysv64" fn kernel_entry(boot_info: *const BootInfo) -> ! {
 
     let info = unsafe { &*boot_info };
 
-    if !info.is_compatible() {
-        boot_failure("incompatible Boot ABI");
-    }
-
-    if info.memory_region_count != 0 && info.memory_regions_ptr == 0 {
-        boot_failure("memory map pointer is null");
-    }
+    validate_boot_info(info, boot_info);
 
     serial::write_fmt(format_args!(
         "[CLEARFOLD KERNEL] Boot ABI     : {}.{}\n",
@@ -66,33 +60,154 @@ pub extern "sysv64" fn kernel_entry(boot_info: *const BootInfo) -> ! {
 
     print_memory_map(info);
 
-    serial::write_str("[CLEARFOLD KERNEL] BootInfo validation: OK\n");
+    serial::write_str("[CLEARFOLD KERNEL] memory map validation : OK\n");
+
+    serial::write_str("[CLEARFOLD KERNEL] kernel ownership      : OK\n");
+
+    serial::write_str("[CLEARFOLD KERNEL] BootInfo ownership    : OK\n");
 
     halt_forever()
 }
 
-fn print_memory_map(info: &BootInfo) {
+fn validate_boot_info(info: &BootInfo, boot_info_ptr: *const BootInfo) {
+    if !info.is_compatible() {
+        boot_failure("incompatible Boot ABI");
+    }
+
+    if info.memory_region_count != 0 && info.memory_regions_ptr == 0 {
+        boot_failure("memory map pointer is null");
+    }
+
     let count = info.memory_region_count as usize;
 
     let stride = info.memory_region_entry_size as usize;
 
+    let mut previous_end = 0u64;
+
+    let mut have_previous = false;
+
     for index in 0..count {
-        let offset = match index.checked_mul(stride) {
-            Some(offset) => offset,
+        let region = memory_region_at(info, index);
+
+        if region.is_empty() {
+            boot_failure("empty memory region");
+        }
+
+        let end = match region.end() {
+            Some(end) => end,
             None => {
-                boot_failure("memory map offset overflow");
+                boot_failure("memory region overflow");
             }
         };
 
-        let region_ptr = unsafe {
-            (info.memory_regions_ptr as *const u8)
-                .add(offset)
-                .cast::<MemoryRegion>()
+        if have_previous && region.base < previous_end {
+            boot_failure("memory regions overlap or are unsorted");
+        }
+
+        previous_end = end;
+
+        have_previous = true;
+    }
+
+    if !range_is_kind(
+        info,
+        info.kernel_phys_base,
+        info.kernel_phys_size,
+        MemoryKind::KERNEL,
+    ) {
+        boot_failure("kernel range is not kernel-owned");
+    }
+
+    if !range_is_kind(
+        info,
+        boot_info_ptr as u64,
+        mem::size_of::<BootInfo>() as u64,
+        MemoryKind::BOOT_INFO,
+    ) {
+        boot_failure("BootInfo is not boot-info-owned");
+    }
+
+    let map_bytes = match (count as u64).checked_mul(stride as u64) {
+        Some(bytes) => bytes,
+        None => {
+            boot_failure("memory map size overflow");
+        }
+    };
+
+    if map_bytes != 0
+        && !range_is_kind(
+            info,
+            info.memory_regions_ptr,
+            map_bytes,
+            MemoryKind::BOOT_INFO,
+        )
+    {
+        boot_failure("memory map is not boot-info-owned");
+    }
+}
+
+fn range_is_kind(info: &BootInfo, base: u64, length: u64, expected_kind: MemoryKind) -> bool {
+    if length == 0 {
+        return false;
+    }
+
+    let Some(end) = base.checked_add(length) else {
+        return false;
+    };
+
+    let mut cursor = base;
+
+    for index in 0..info.memory_region_count as usize {
+        let region = memory_region_at(info, index);
+
+        let Some(region_end) = region.end() else {
+            return false;
         };
 
-        // read_unaligned keeps future ABI versions safe even if their
-        // entry stride differs from the current Rust alignment.
-        let region = unsafe { ptr::read_unaligned(region_ptr) };
+        if region_end <= cursor {
+            continue;
+        }
+
+        if region.base > cursor {
+            return false;
+        }
+
+        if region.kind != expected_kind {
+            return false;
+        }
+
+        cursor = region_end.min(end);
+
+        if cursor == end {
+            return true;
+        }
+    }
+
+    false
+}
+
+fn memory_region_at(info: &BootInfo, index: usize) -> MemoryRegion {
+    let stride = info.memory_region_entry_size as usize;
+
+    let offset = match index.checked_mul(stride) {
+        Some(offset) => offset,
+        None => {
+            boot_failure("memory map offset overflow");
+        }
+    };
+
+    let region_ptr = unsafe {
+        (info.memory_regions_ptr as *const u8)
+            .add(offset)
+            .cast::<MemoryRegion>()
+    };
+
+    unsafe { ptr::read_unaligned(region_ptr) }
+}
+
+fn print_memory_map(info: &BootInfo) {
+    for index in 0..info.memory_region_count as usize {
+        let region = memory_region_at(info, index);
 
         let end = region.end().unwrap_or(u64::MAX);
 
